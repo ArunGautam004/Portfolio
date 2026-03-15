@@ -30,29 +30,40 @@ const MainContainer = ({ children }: PropsWithChildren) => {
     };
   }, [isDesktopView]);
 
+  const content = (
+    <>
+      <Landing>{!isDesktopView && children}</Landing>
+      <About />
+      <WhatIDo />
+      <Career />
+      <Work />
+      {isDesktopView && (
+        <Suspense fallback={<div>Loading....</div>}>
+          <TechStack />
+        </Suspense>
+      )}
+      <Contact />
+    </>
+  );
+
   return (
     <div className="container-main">
       <Cursor />
       <Navbar />
       <SocialIcons />
       {isDesktopView && children}
-      <div id="smooth-wrapper">
-        <div id="smooth-content">
-          <div className="container-main">
-            <Landing>{!isDesktopView && children}</Landing>
-            <About />
-            <WhatIDo />
-            <Career />
-            <Work />
-            {isDesktopView && (
-              <Suspense fallback={<div>Loading....</div>}>
-                <TechStack />
-              </Suspense>
-            )}
-            <Contact />
+
+      {isDesktopView ? (
+        // Desktop: smooth-wrapper for Lenis + ScrollTrigger
+        <div id="smooth-wrapper">
+          <div id="smooth-content">
+            <div className="container-main">{content}</div>
           </div>
         </div>
-      </div>
+      ) : (
+        // Mobile: plain div, no wrapper — native scroll works freely
+        <div className="container-main">{content}</div>
+      )}
     </div>
   );
 };

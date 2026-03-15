@@ -20,25 +20,32 @@ export let lenis: Lenis;
 
 const Navbar = () => {
   useEffect(() => {
-    const mobile = window.innerWidth <= 1024;
+    const isMobile = window.innerWidth <= 1024;
 
-    lenis = new Lenis({
-      duration: 1.4,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      smoothWheel: true,
-      // disable touch multiplier on mobile so native scroll works
-      touchMultiplier: mobile ? 0 : 1.5,
-      wheelMultiplier: 0.9,
-    });
+    if (!isMobile) {
+      // ── Desktop only: use Lenis smooth scroll ──
+      lenis = new Lenis({
+        duration: 1.4,
+        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+        smoothWheel: true,
+        wheelMultiplier: 0.9,
+      });
 
-    lenis.on("scroll", ScrollTrigger.update);
+      lenis.on("scroll", ScrollTrigger.update);
 
-    gsap.ticker.add((time) => {
-      lenis.raf(time * 1000);
-    });
+      gsap.ticker.add((time) => {
+        lenis.raf(time * 1000);
+      });
 
-    gsap.ticker.lagSmoothing(0);
+      gsap.ticker.lagSmoothing(0);
+    } else {
+      // ── Mobile: native scroll, just hook ScrollTrigger to scroll event ──
+      window.addEventListener("scroll", ScrollTrigger.update, {
+        passive: true,
+      });
+    }
 
+    // Nav link clicks — smooth scroll to section
     const links = document.querySelectorAll(".header ul a");
     links.forEach((elem) => {
       const element = elem as HTMLAnchorElement;
@@ -48,17 +55,22 @@ const Navbar = () => {
         if (section) {
           const target = document.querySelector(section);
           if (target) {
-            lenis.scrollTo(target as HTMLElement, {
-              offset: 0,
-              duration: 1.6,
-            });
+            if (!isMobile && lenis) {
+              lenis.scrollTo(target as HTMLElement, {
+                offset: 0,
+                duration: 1.6,
+              });
+            } else {
+              target.scrollIntoView({ behavior: "smooth" });
+            }
           }
         }
       });
     });
 
     return () => {
-      lenis.destroy();
+      if (lenis) lenis.destroy();
+      window.removeEventListener("scroll", ScrollTrigger.update);
     };
   }, []);
 
