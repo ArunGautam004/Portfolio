@@ -26,7 +26,7 @@ const Navbar = () => {
       duration: 1.4,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       smoothWheel: true,
-      // On mobile use native touch scroll — don't intercept touch
+      // On mobile use native touch scroll — don't intercept touc
       smoothTouch: false,
       touchMultiplier: isMobile() ? 0 : 1.5,
       wheelMultiplier: 0.9,
