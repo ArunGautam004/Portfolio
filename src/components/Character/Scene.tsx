@@ -83,26 +83,18 @@ const Scene = () => {
         handleMouseMove(event, (x, y) => (mouse = { x, y }));
       };
 
-      // ── Touch handlers only on landingDiv, with passive:true so
-      //    the browser keeps native scroll working ──
-      let debounce: number | undefined;
       let isTouchMoving = false;
 
-      const onTouchStart = (event: TouchEvent) => {
+      const onTouchStart = () => {
         isTouchMoving = false;
-        debounce = setTimeout(() => {
-          // only track head rotation, don't prevent scroll
-        }, 200) as unknown as number;
       };
 
       const onTouchMove = (event: TouchEvent) => {
         isTouchMoving = true;
-        // DON'T call preventDefault — let page scroll work normally
         handleTouchMove(event, (x, y) => (mouse = { x, y }));
       };
 
       const onTouchEnd = () => {
-        clearTimeout(debounce);
         if (isTouchMoving) {
           handleTouchEnd((x, y, interpolationX, interpolationY) => {
             mouse = { x, y };
@@ -115,14 +107,15 @@ const Scene = () => {
 
       const landingDiv = document.getElementById("landingDiv");
       if (landingDiv) {
-        // passive: true = browser won't wait for JS before scrolling
         landingDiv.addEventListener("touchstart", onTouchStart, {
           passive: true,
         });
         landingDiv.addEventListener("touchmove", onTouchMove, {
           passive: true,
         });
-        landingDiv.addEventListener("touchend", onTouchEnd, { passive: true });
+        landingDiv.addEventListener("touchend", onTouchEnd, {
+          passive: true,
+        });
       }
 
       const animate = () => {
@@ -147,7 +140,6 @@ const Scene = () => {
       animate();
 
       return () => {
-        clearTimeout(debounce);
         scene.clear();
         renderer.dispose();
         window.removeEventListener("resize", () =>

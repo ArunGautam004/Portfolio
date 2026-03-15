@@ -18,17 +18,16 @@ export const smoother = {
 
 export let lenis: Lenis;
 
-const isMobile = () => window.innerWidth <= 1024;
-
 const Navbar = () => {
   useEffect(() => {
+    const mobile = window.innerWidth <= 1024;
+
     lenis = new Lenis({
       duration: 1.4,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       smoothWheel: true,
-      // On mobile use native touch scroll — don't intercept touc
-      smoothTouch: false,
-      touchMultiplier: isMobile() ? 0 : 1.5,
+      // disable touch multiplier on mobile so native scroll works
+      touchMultiplier: mobile ? 0 : 1.5,
       wheelMultiplier: 0.9,
     });
 
@@ -40,7 +39,6 @@ const Navbar = () => {
 
     gsap.ticker.lagSmoothing(0);
 
-    // Nav link clicks
     const links = document.querySelectorAll(".header ul a");
     links.forEach((elem) => {
       const element = elem as HTMLAnchorElement;
