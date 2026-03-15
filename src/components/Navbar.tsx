@@ -7,7 +7,6 @@ import "./styles/Navbar.css";
 
 gsap.registerPlugin(ScrollTrigger);
 
-// Stub so initialFX.ts doesn't break
 export const smoother = {
   paused: (_v: boolean) => {},
   scrollTop: (_v: number) => {},
@@ -17,21 +16,22 @@ export const smoother = {
   },
 };
 
-// Global lenis instance
 export let lenis: Lenis;
+
+const isMobile = () => window.innerWidth <= 1024;
 
 const Navbar = () => {
   useEffect(() => {
-    // Init Lenis
     lenis = new Lenis({
       duration: 1.4,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       smoothWheel: true,
+      // On mobile use native touch scroll — don't intercept touch
+      smoothTouch: false,
+      touchMultiplier: isMobile() ? 0 : 1.5,
       wheelMultiplier: 0.9,
-      touchMultiplier: 1.5,
     });
 
-    // Connect Lenis to GSAP ScrollTrigger
     lenis.on("scroll", ScrollTrigger.update);
 
     gsap.ticker.add((time) => {
@@ -40,7 +40,7 @@ const Navbar = () => {
 
     gsap.ticker.lagSmoothing(0);
 
-    // Smooth nav link clicks
+    // Nav link clicks
     const links = document.querySelectorAll(".header ul a");
     links.forEach((elem) => {
       const element = elem as HTMLAnchorElement;
@@ -50,7 +50,10 @@ const Navbar = () => {
         if (section) {
           const target = document.querySelector(section);
           if (target) {
-            lenis.scrollTo(target as HTMLElement, { offset: 0, duration: 1.6 });
+            lenis.scrollTo(target as HTMLElement, {
+              offset: 0,
+              duration: 1.6,
+            });
           }
         }
       });
@@ -58,7 +61,6 @@ const Navbar = () => {
 
     return () => {
       lenis.destroy();
-      gsap.ticker.remove((time) => lenis.raf(time * 1000));
     };
   }, []);
 

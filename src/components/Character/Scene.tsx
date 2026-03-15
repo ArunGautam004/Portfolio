@@ -20,6 +20,7 @@ const Scene = () => {
   const { setLoading } = useLoading();
 
   const [character, setChar] = useState<THREE.Object3D | null>(null);
+
   useEffect(() => {
     if (canvasDiv.current) {
       let rect = canvasDiv.current.getBoundingClientRect();
@@ -81,31 +82,49 @@ const Scene = () => {
       const onMouseMove = (event: MouseEvent) => {
         handleMouseMove(event, (x, y) => (mouse = { x, y }));
       };
+
+      // ── Touch handlers only on landingDiv, with passive:true so
+      //    the browser keeps native scroll working ──
       let debounce: number | undefined;
+      let isTouchMoving = false;
+
       const onTouchStart = (event: TouchEvent) => {
-        const element = event.target as HTMLElement;
+        isTouchMoving = false;
         debounce = setTimeout(() => {
-          element?.addEventListener("touchmove", (e: TouchEvent) =>
-            handleTouchMove(e, (x, y) => (mouse = { x, y }))
-          );
-        }, 200);
+          // only track head rotation, don't prevent scroll
+        }, 200) as unknown as number;
+      };
+
+      const onTouchMove = (event: TouchEvent) => {
+        isTouchMoving = true;
+        // DON'T call preventDefault — let page scroll work normally
+        handleTouchMove(event, (x, y) => (mouse = { x, y }));
       };
 
       const onTouchEnd = () => {
-        handleTouchEnd((x, y, interpolationX, interpolationY) => {
-          mouse = { x, y };
-          interpolation = { x: interpolationX, y: interpolationY };
-        });
+        clearTimeout(debounce);
+        if (isTouchMoving) {
+          handleTouchEnd((x, y, interpolationX, interpolationY) => {
+            mouse = { x, y };
+            interpolation = { x: interpolationX, y: interpolationY };
+          });
+        }
       };
 
-      document.addEventListener("mousemove", (event) => {
-        onMouseMove(event);
-      });
+      document.addEventListener("mousemove", onMouseMove);
+
       const landingDiv = document.getElementById("landingDiv");
       if (landingDiv) {
-        landingDiv.addEventListener("touchstart", onTouchStart);
-        landingDiv.addEventListener("touchend", onTouchEnd);
+        // passive: true = browser won't wait for JS before scrolling
+        landingDiv.addEventListener("touchstart", onTouchStart, {
+          passive: true,
+        });
+        landingDiv.addEventListener("touchmove", onTouchMove, {
+          passive: true,
+        });
+        landingDiv.addEventListener("touchend", onTouchEnd, { passive: true });
       }
+
       const animate = () => {
         requestAnimationFrame(animate);
         if (headBone) {
@@ -126,6 +145,7 @@ const Scene = () => {
         renderer.render(scene, camera);
       };
       animate();
+
       return () => {
         clearTimeout(debounce);
         scene.clear();
@@ -136,9 +156,10 @@ const Scene = () => {
         if (canvasDiv.current) {
           canvasDiv.current.removeChild(renderer.domElement);
         }
+        document.removeEventListener("mousemove", onMouseMove);
         if (landingDiv) {
-          document.removeEventListener("mousemove", onMouseMove);
           landingDiv.removeEventListener("touchstart", onTouchStart);
+          landingDiv.removeEventListener("touchmove", onTouchMove);
           landingDiv.removeEventListener("touchend", onTouchEnd);
         }
       };
