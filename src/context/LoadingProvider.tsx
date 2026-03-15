@@ -24,7 +24,20 @@ export const LoadingProvider = ({ children }: PropsWithChildren) => {
     setIsLoading,
     setLoading,
   };
-  useEffect(() => {}, [loading]);
+
+  useEffect(() => {
+    // Prevent scroll during loading
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isLoading) {
+      document.body.style.overflow = "";
+    }
+  }, [isLoading]);
 
   return (
     <LoadingContext.Provider value={value as LoadingType}>
